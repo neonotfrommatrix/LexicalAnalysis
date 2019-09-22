@@ -162,6 +162,13 @@ def lexer(token):           #defines a function
         return "INTEGER     =   "
 
 text = process_file(sys.argv[1])
-print("TOKEN            Lexemes\n")
+output_string = ''
+print("TOKEN            Lexemes\n\n")
+output_string += "TOKEN            Lexemes\n"
 for word in text:
-    print (lexer(word), word)
+    token = lexer(word)
+    output_string += token + ' ' + word + '\n'
+    print (token, word)
+
+with open("output.txt", 'w') as f:
+    f.write(output_string)
