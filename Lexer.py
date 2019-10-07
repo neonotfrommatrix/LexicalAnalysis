@@ -1,5 +1,6 @@
 import sys
 
+
 if len(sys.argv) < 2:
     print("\nPlease input file name as argument. Usage example: \"python Lexer.py SampleInputFile.txt\" \n")
     raise Exception
