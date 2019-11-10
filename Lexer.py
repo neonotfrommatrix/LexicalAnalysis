@@ -1,9 +1,5 @@
 import sys
 
-if len(sys.argv) < 2:
-    print("\nPlease input file name as argument. Usage example: \"python Lexer.py SampleInputFile.txt\" \n")
-    raise Exception
-
 def process_file(file_name):
     #all lines into a string from text file
     with open(file_name) as f:
@@ -134,7 +130,7 @@ def int_fsm(token):
     return current_state == 1
 
 def lexer(token):           #defines a function
-    separators = "'(){}[],.:;!"
+    separators = "'(){}[],.:;!$"
     if token in separators or token == ' ':
         return "SEPARATOR   =   "
 
@@ -161,15 +157,20 @@ def lexer(token):           #defines a function
     if is_int:
         return "INTEGER     =   "
 
-text = process_file(sys.argv[1])
-output_string = ''
-print("TOKEN            Lexemes\n\n")
-output_string += "TOKEN            Lexemes\n"
-for word in text:
-    token = lexer(word)
-    output_string += token + ' ' + word + '\n'
-    print (token, word)
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print("\nPlease input file name as argument. Usage example: \"python Lexer.py SampleInputFile.txt\" \n")
+        raise Exception
 
-with open("output.txt", 'w') as f:
-    f.write(output_string)
-    #
+    text = process_file(sys.argv[1])
+    output_string = ''
+    print("TOKEN            Lexemes\n\n")
+    output_string += "TOKEN            Lexemes\n"
+    for word in text:
+        token = lexer(word)
+        output_string += token + ' ' + word + '\n'
+        print (token, word)
+
+    with open("output.txt", 'w') as f:
+        f.write(output_string)
+        #
