@@ -34,8 +34,8 @@ def rule(row, col):
     else:
         print("none met")
 
-def is_assignment():
-    return INPUT.count('=') > 0
+def is_assignment(inp):
+    return inp.count('=') > 0
 
 TDPP_Table = [
     #Row    i       +       -       *       /       (       )       $
@@ -52,56 +52,53 @@ COLS = {
 ROWS = {
     'S':0, 'E':1, 'Q':2, 'T':3, 'R':4, 'F':5
 }
-
 if __name__ == '__main__':
     if len(sys.argv) < 2:
         print("\nPlease input file name as argument. Usage example: \"python Lexer.py SampleInputFile.txt\" \n")
         raise Exception
     text = lx.process_file(sys.argv[1])
 
-    text = "".join(text).replace(';',';$')
+    text = " ".join(text).replace('$', '').replace(';',';$')
 
     if text[0:2] == '%%':
         print('\nToken: {}        Lexeme: {}'.format('OPERATOR', '%%' ) )
         print(RULES[0])
         text = text[2:]
-    else:
-        print('ERROR: \'%%\' Operator not found at beginning of file!')
+    # else:
+    #     print('ERROR: \'%%\' Operator not found at beginning of file!')
 
-    INPUTS = text.split('$')
-    for input_no, INPUT in enumerate(INPUTS):
-        input_no += 1
-        if INPUT == '':
-            print('Finished!')
-            break
-        if not INPUT.endswith(';'):
-            print('ERROR on line {} on input {}. Statemend does not end in \';\'!'.format(input_no, INPUT))
+    STATEMENTS = text.split('$')
+    print(STATEMENTS)
+    for statement_no, statement in enumerate(STATEMENTS):
+        print(statement)
+        if not statement.endswith(';'):
+            print('ERROR on line {} on statement ({}). Statemend does not end in \';\'!'.format(statement_no, statement))
             sys.exit(1)
-        if INPUT == ';':
-            print('\nToken: {}        Lexeme: {}'.format('SEPARATOR', ';' ) )
-            continue
+
         STACK = ['$', 'S']
-        STATEMENT = INPUT
-        
-        print('\nToken: {}        Lexeme: {}'.format(lx.lexer(INPUT[0]).split()[0], INPUT[0] ) )
-        while INPUT:
-            if INPUT[0] in '($)' or lx.lexer(INPUT[0]).startswith("OPERATOR"):
-                compare = INPUT[0]
-            else:
+        for token_no, token in enumerate(statement.split()):
+            print(token)
+            if token == '':
+                print('Finished!')
+                break
+            if token == ';':
+                print('\nToken: {}        Lexeme: {}'.format('SEPARATOR', ';' ) )
+                continue
+            if lx.lexer(token) == 'IDENTIFIER':
                 compare = 'i'
+                print('ID')
+            else:
+                compare = token
             if STACK[-1] == compare:
                 STACK = STACK[:-1]
                 INPUT = INPUT[1:]
-                if compare == 'i' and not is_assignment():
+                if compare == 'i':
                     print(RULES[6])
                 elif compare == '$':
                     print(RULES[7])
-                if len(INPUT):
-                    print('\nToken: {}        Lexeme: {}'.format(lx.lexer(INPUT[0]).split()[0], INPUT[0] ) )
             else:
-                char = INPUT[0]
-                if char in COLS.keys():
-                    col = COLS[char]
+                if compare in COLS.keys():
+                    col = COLS[compare]
                 else:
                     col = COLS['i']
                 if STACK[-1] == '$':
@@ -110,7 +107,7 @@ if __name__ == '__main__':
                 try:
                     row = ROWS[STACK[-1]]
                 except KeyError:
-                    print('ERROR on line {} on statement {}. Unexpected character {}!'.format(input_no, STATEMENT, STACK[-1]))
+                    print('ERROR on line {} on statement {}. Unexpected character ({}).'.format(statement_no, statement, STACK[-1]))
                     sys.exit(1)
                 string = TDPP_Table[row][col]
                 if string:
@@ -120,6 +117,76 @@ if __name__ == '__main__':
                         for letter in reversed(string):
                             STACK.append(letter)
                 else:
-                    print('ERROR on line {} on statement {}. Expected {}!'.format(input_no, STATEMENT, Term_Definition[TDPP_Table[row][0]]))
+                    print('ERROR on line ({}) on statement ({}). Expected ({})!'.format(statement_no, statement, Term_Definition[TDPP_Table[row][0]]))
                     sys.exit(1)
+# if __name__ == '__main__':
+#     if len(sys.argv) < 2:
+#         print("\nPlease input file name as argument. Usage example: \"python Lexer.py SampleInputFile.txt\" \n")
+#         raise Exception
+#     text = lx.process_file(sys.argv[1])
+
+#     text = "".join(text).replace('$', '').replace(';',';$')
+
+#     if text[0:2] == '%%':
+#         print('\nToken: {}        Lexeme: {}'.format('OPERATOR', '%%' ) )
+#         print(RULES[0])
+#         text = text[2:]
+#     # else:
+#     #     print('ERROR: \'%%\' Operator not found at beginning of file!')
+
+#     INPUTS = text.split('$')
+#     print(INPUTS)
+#     for input_no, INPUT in enumerate(INPUTS):
+#         input_no += 1
+#         if INPUT == '':
+#             print('Finished!')
+#             break
+#         if not INPUT.endswith(';'):
+#             print('ERROR on line {} on input ({}). Statemend does not end in \';\'!'.format(input_no, INPUT))
+#             sys.exit(1)
+#         if INPUT == ';':
+#             print('\nToken: {}        Lexeme: {}'.format('SEPARATOR', ';' ) )
+#             continue
+#         STACK = ['$', 'S']
+#         STATEMENT = INPUT
+        
+#         print('\nToken: {}        Lexeme: {}'.format(lx.lexer(INPUT[0]).split()[0], INPUT[0] ) )
+#         while INPUT:
+#             if INPUT[0] in '($)' or lx.lexer(INPUT[0]).startswith("OPERATOR"):
+#                 compare = INPUT[0]
+#             else:
+#                 compare = 'i'
+#             if STACK[-1] == compare:
+#                 STACK = STACK[:-1]
+#                 INPUT = INPUT[1:]
+#                 if compare == 'i' and not is_assignment():
+#                     print(RULES[6])
+#                 elif compare == '$':
+#                     print(RULES[7])
+#                 if len(INPUT):
+#                     print('\nToken: {}        Lexeme: {}'.format(lx.lexer(INPUT[0]).split()[0], INPUT[0] ) )
+#             else:
+#                 char = INPUT[0]
+#                 if char in COLS.keys():
+#                     col = COLS[char]
+#                 else:
+#                     col = COLS['i']
+#                 if STACK[-1] == '$':
+#                     print(RULES[7])
+#                     break
+#                 try:
+#                     row = ROWS[STACK[-1]]
+#                 except KeyError:
+#                     print('ERROR on line {} on statement {}. Unexpected character ({}).'.format(input_no, STATEMENT, STACK[-1]))
+#                     sys.exit(1)
+#                 string = TDPP_Table[row][col]
+#                 if string:
+#                     rule(row, col)
+#                     STACK = STACK[:-1]
+#                     if string != '^':
+#                         for letter in reversed(string):
+#                             STACK.append(letter)
+#                 else:
+#                     print('ERROR on line ({}) on statement ({}). Expected ({})!'.format(input_no, STATEMENT, Term_Definition[TDPP_Table[row][0]]))
+#                     sys.exit(1)
 

@@ -9,7 +9,7 @@ def process_file(file_name):
     separators = ['\'', '(', ')', '{', '}', '[', ']', ',', '.', ':', ';']
 
     # single-line comments
-    single_line_comments = ['#', '//', '!']
+    single_line_comments = ['#', '//', '!', '%%']
 
     # Break into lines
     text = text.split('\n')
@@ -30,11 +30,18 @@ def process_file(file_name):
 
     # Split separators from other words
     new_text = ''
+    identifier = False
     for char in text:
-        if char in separators:
-            new_text += ' ' + char + ' '
-        else:
+        if char.isalpha():
+            identifier = True
             new_text += char
+        elif char == '$' and identifier:
+            new_text += char
+            identifier = False
+        elif char.isnumeric() and identifier:
+            new_text += char
+        else:
+            new_text += ' ' + char + ' '
 
     text = new_text.split()
 
@@ -60,6 +67,7 @@ def identifier_fsm(token):
     for character in token:
         if character.isalpha():
             column = 0
+
         elif character.isdigit():
             column = 1
         elif character == '$':
@@ -132,30 +140,33 @@ def int_fsm(token):
 def lexer(token):           #defines a function
     separators = "'(){}[],.:;!$"
     if token in separators or token == ' ':
-        return "SEPARATOR   =   "
+        return "SEPARATOR"
 
     operators = ["*", "+", "-", "=", "/", "<", ">", "<=", ">=", "%"]
     if token in operators:
-        return "OPERATOR    =   "
+        return "OPERATOR"
 
-    keywords = ["int", "float", "bool", "if", "else", "then", "endif", "while", "whileend", "do", "doend", "for", "forend", "input", "output", "and", "or", "function"]
+    keywords = ["int", "float", "bool", "boolean", "if", "else", "then", "endif", "while", "whileend", "do", "doend", "for", "forend", "input", "output", "and", "or", "function"]
     if token in keywords:
-        return "KEYWORD     =   "
+        return "KEYWORD"
     
     is_identifier = identifier_fsm(token)
 
     if is_identifier:
-        return "IDENTIFIER  =   "
+        return "IDENTIFIER"
 
     is_real = reals_fsm(token)
 
     if is_real:
-        return "REAL        =   "
+        return "REAL"
 
     is_int = int_fsm(token)
 
     if is_int:
-        return "INTEGER     =   "
+        return "INTEGER"
+    
+    print("Error: {} is not recognized".format(token))
+    raise Exception
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
@@ -164,10 +175,12 @@ if __name__ == '__main__':
 
     text = process_file(sys.argv[1])
     output_string = ''
-    print("TOKEN            Lexemes\n\n")
-    output_string += "TOKEN            Lexemes\n"
+    print("TOKEN          Lexemes\n")
+    output_string += "TOKEN          Lexemes\n"
     for word in text:
-        token = lexer(word)
+        if not word:
+            continue
+        token = lexer(word).ljust(15, ' ')
         output_string += token + ' ' + word + '\n'
         print (token, word)
 
