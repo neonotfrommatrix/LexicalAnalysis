@@ -3,7 +3,7 @@ import sys
 Term_Definition = {
     'S': 'Statement', 'E' : 'Expression', 'Q' : 'ExpressionPrime', 'T' : 'Term', 'R' : 'TermPrime', 'F' : 'Factor', 'i' : 'Identifier', '^' : 'epsilon'
 }
-RULES = [ #Line num - 5
+RULES = [ #Line num - 7
    '<Statement List> -> <Statement> | <Statement> <Statement List>',                                                
    '<Statement> -> <Compound> | <Assign> | <If> | <Return> | <Print> | <Scan> | <While>',
    '<Assign> -> <Identifier> = <Expression>;',
@@ -52,11 +52,60 @@ COLS = {
 ROWS = {
     'S':0, 'E':1, 'Q':2, 'T':3, 'R':4, 'F':5
 }
+def process_token(token, STACK):
+    # print('stack', STACK)
+    if token == '':
+        print('Finished!')
+        return STACK
+    if token == ';':
+        # print('\nToken: {}        Lexeme: {}'.format('SEPARATOR', ';' ) )
+        return STACK
+    if lx.lexer(token) == 'IDENTIFIER':
+        compare = 'i'
+    else:
+        compare = token
+    # print('compare',compare)
+    print(STACK)
+    if STACK[-1] == compare:
+        STACK = STACK[:-1]
+        if compare == 'i':
+            print(RULES[6])
+        elif compare == '$':
+            print(RULES[7])
+        return STACK
+    else:
+        if compare in COLS.keys():
+            col = COLS[compare]
+        else:
+            col = COLS['i']
+        if STACK[-1] == '$':
+            print(RULES[7])
+            return STACK
+        try:
+            row = ROWS[STACK[-1]]
+        except KeyError:
+            print('ERROR on line {} on statement {}. Unexpected character ({}).'.format(statement_no, statement, STACK[-1]))
+            sys.exit(1)
+        string = TDPP_Table[row][col]
+        if string is not None:
+            rule(row, col)
+            STACK = STACK[:-1]
+            if string != '^':
+                for letter in reversed(string):
+                    STACK.append(letter)
+        else:
+            print('ERROR on line ({}) on statement ({}). Expected ({})!'.format(statement_no, statement, Term_Definition[TDPP_Table[row][0]]))
+            sys.exit(1)
+
+    return process_token(token, STACK)
+
 if __name__ == '__main__':
+    global STACK
     if len(sys.argv) < 2:
         print("\nPlease input file name as argument. Usage example: \"python Lexer.py SampleInputFile.txt\" \n")
-        raise Exception
-    text = lx.process_file(sys.argv[1])
+        # raise Exception
+
+    text = lx.process_file('./SampleInput3.txt')
 
     text = " ".join(text).replace('$', '').replace(';',';$')
 
@@ -70,55 +119,21 @@ if __name__ == '__main__':
     STATEMENTS = text.split('$')
     print(STATEMENTS)
     for statement_no, statement in enumerate(STATEMENTS):
-        print(statement)
-        if not statement.endswith(';'):
-            print('ERROR on line {} on statement ({}). Statemend does not end in \';\'!'.format(statement_no, statement))
-            sys.exit(1)
-
+        # print('ON STATEMENT', statement)
+        # if not statement.endswith(';'):
+        #     print('ERROR on line {} on statement ({}). Statemend does not end in \';\'!'.format(statement_no, statement))
+        #     sys.exit(1)
+        if statement == '':
+            print('Finished!')
+            continue
         STACK = ['$', 'S']
         for token_no, token in enumerate(statement.split()):
-            print(token)
-            if token == '':
-                print('Finished!')
-                break
-            if token == ';':
-                print('\nToken: {}        Lexeme: {}'.format('SEPARATOR', ';' ) )
-                continue
-            if lx.lexer(token) == 'IDENTIFIER':
-                compare = 'i'
-                print('ID')
-            else:
-                compare = token
-            if STACK[-1] == compare:
-                STACK = STACK[:-1]
-                INPUT = INPUT[1:]
-                if compare == 'i':
-                    print(RULES[6])
-                elif compare == '$':
-                    print(RULES[7])
-            else:
-                if compare in COLS.keys():
-                    col = COLS[compare]
-                else:
-                    col = COLS['i']
-                if STACK[-1] == '$':
-                    print(RULES[7])
-                    break
-                try:
-                    row = ROWS[STACK[-1]]
-                except KeyError:
-                    print('ERROR on line {} on statement {}. Unexpected character ({}).'.format(statement_no, statement, STACK[-1]))
-                    sys.exit(1)
-                string = TDPP_Table[row][col]
-                if string:
-                    rule(row, col)
-                    STACK = STACK[:-1]
-                    if string != '^':
-                        for letter in reversed(string):
-                            STACK.append(letter)
-                else:
-                    print('ERROR on line ({}) on statement ({}). Expected ({})!'.format(statement_no, statement, Term_Definition[TDPP_Table[row][0]]))
-                    sys.exit(1)
+            print('\nToken: {}        Lexeme: {}'.format(lx.lexer(token), token ) )
+            STACK = process_token(token, STACK)
+        while STACK:
+            STACK = process_token('$', STACK)
+
+            
 # if __name__ == '__main__':
 #     if len(sys.argv) < 2:
 #         print("\nPlease input file name as argument. Usage example: \"python Lexer.py SampleInputFile.txt\" \n")
