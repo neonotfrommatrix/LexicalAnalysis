@@ -150,6 +150,10 @@ def lexer(token):           #defines a function
     if token in keywords:
         return "KEYWORD"
     
+    booleans = ['true', 'false']
+    if token in booleans:
+        return "BOOLEAN"
+
     is_identifier = identifier_fsm(token)
 
     if is_identifier:

@@ -52,10 +52,11 @@ COLS = {
 ROWS = {
     'S':0, 'E':1, 'Q':2, 'T':3, 'R':4, 'F':5
 }
-def process_token(token, STACK):
+def process_token(token, STACK, debug=False):
     # print('stack', STACK)
     if token == '':
-        print('Finished!')
+        if debug:
+            print('Finished!')
         return STACK
     if token == ';':
         # print('\nToken: {}        Lexeme: {}'.format('SEPARATOR', ';' ) )
@@ -65,12 +66,13 @@ def process_token(token, STACK):
     else:
         compare = token
     # print('compare',compare)
-    print(STACK)
+    if debug:
+        print(STACK)
     if STACK[-1] == compare:
         STACK = STACK[:-1]
-        if compare == 'i':
+        if compare == 'i' and debug:
             print(RULES[6])
-        elif compare == '$':
+        elif compare == '$' and debug:
             print(RULES[7])
         return STACK
     else:
@@ -79,7 +81,8 @@ def process_token(token, STACK):
         else:
             col = COLS['i']
         if STACK[-1] == '$':
-            print(RULES[7])
+            if debug:
+                print(RULES[7])
             return STACK
         try:
             row = ROWS[STACK[-1]]
