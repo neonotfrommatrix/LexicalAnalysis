@@ -37,3 +37,22 @@ def test_positive_assignments(statement):
 ])
 def test_negative_assignments(statement):
     assert sut.is_assignment(statement) == False
+
+@parameterized.expand([
+    'a * b ;',
+    'see3$ - 0 ;',
+    '3 / 2 ;',
+    ' 1 + 2 * 3 / 4 - large$ ;'
+])
+def test_positive_expressions(statement):
+    assert sut.is_expression(statement) == True
+
+# @parameterized.expand([
+#     'int a = 12 ;',
+#     'int = 2 ;',
+#     '0 = a ;',
+#     '1 = 2 ;',
+#     'one = two ',
+# ])
+# def test_negative_assignments(statement):
+#     assert sut.is_assignment(statement) == False

@@ -1,10 +1,12 @@
 import sys
 
-def process_file(file_name):
+def process_file(file_name, as_string=False):
     #all lines into a string from text file
-    with open(file_name) as f:
-        text = f.read()
-
+    if not as_string:
+        with open(file_name) as f:
+            text = f.read()
+    else:
+        text = file_name
     #single-char words
     separators = ['\'', '(', ')', '{', '}', '[', ']', ',', '.', ':', ';']
 
@@ -138,6 +140,7 @@ def int_fsm(token):
     return current_state == 1
 
 def lexer(token):           #defines a function
+    token = str(token)
     separators = "'(){}[],.:;!$"
     if token in separators or token == ' ':
         return "SEPARATOR"

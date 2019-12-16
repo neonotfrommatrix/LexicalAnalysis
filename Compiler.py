@@ -1,10 +1,19 @@
-from Lexer import lexer
+from Lexer import lexer, process_file
 
 BASE_MEMLOC = 2000
-memory_table = []
+symbol_table = []
 instructions = []
 STACK = []
 DATATYPES = ['int', 'float', 'bool', 'boolean']
+OPERATORS = ['*', '+', '-', '/']
+ADDR = 0
+
+class Symbol():
+    def __init__(self, ID, MEM, TYPE, VAL=None):
+        self.ID = ID
+        self.MEM = MEM
+        self.TYPE = TYPE
+        self.VAL = VAL
 
 # New declarations
 def is_declaration(statement):
@@ -41,45 +50,169 @@ def is_assignment(statement):
         return False
     return True
 
+def resolve_expresion(statement):
+    tokens = statement.split()
+    left = tokens[0]
+    operator = tokens[1]
+    right = tokens[2]
+    if operator == '+':
+        return left + right
+    if operator == '-':
+        return left - right
+    if operator == '*':
+        return left * right
+    if operator == '/':
+        return left / right
+
+def is_expression(statement):
+    tokens = statement.split()
+    if not tokens[-1] == ';':
+        return False
+
+    left = tokens[0]
+    if not lexer(left) =='IDENTIFIER' and not lexer(left) == 'INTEGER':
+        return False
+
+    operator = tokens[1] 
+    if operator not in OPERATORS:
+        return False
+
+    right = tokens[2:]
+    if len(right) > 2:
+        return is_expression(' '.join(right))
+    else:
+        return lexer(right[0]) == 'INTEGER' or lexer(right[0]) == 'IDENTIFIER'
+
+def is_condition(statement):
+    tokens = statement.split()
+
+
+
 def table_add(statement):
     tokens = statement.split()
     tuple_type = tokens[0]
-    for id in [token for token in tokens if lexer(token) == 'IDENTIFIER']:
-        tup = (id, BASE_MEMLOC + len(memory_table), tuple_type)
-        memory_table.append(tup)
+    for ID in [token for token in tokens if lexer(token) == 'IDENTIFIER']:
+        symbol = Symbol(ID, BASE_MEMLOC + len(symbol_table), tuple_type)
+        symbol_table.append(symbol)
 
-    # print(memory_table)
+def get_mem_loc(ID):
+    for symbol in symbol_table:
+        if symbol.ID == ID:
+            return symbol.MEM
+    return -1
+
+def set_mem_loc(MEM, VAL):
+    symbol_table[MEM - BASE_MEMLOC].VAL = VAL
+
+def transform_value(value):
+    if value == 'true':
+        return 1
+    if value == 'false':
+        return 0
+    if lexer(value) == 'IDENTIFIER':
+        MEM = get_mem_loc(value)
+        if MEM == -1:
+            raise Exception('Identifier {} referenced before assignment!'.format(value))
+        else:
+            return symbol_table[MEM - BASE_MEMLOC].VAL
+    try:
+        return int(value)
+    except:
+        raise Exception('Invalid value {}. Expected integer, boolean, or previously assigned identifier!'.format(value))
+
+def create_instruction(instruction, value=''):
+    if instruction == 'PUSHI': #Pushes the {Integer Value} onto the Top of the Stack (TOS)
+        value = transform_value(value)
+        STACK.append(value)
+
+    elif instruction == 'PUSHM': # Pushes the value stored at {ML} onto TOS
+        value = symbol_table[get_mem_loc(value) - BASE_MEMLOC].VAL
+        STACK.append(value)
+
+    elif instruction == 'POPM': # Pops the value from the top of the stack and stores it at {ML}
+        ID = value
+        mem = get_mem_loc(ID)
+        set_mem_loc(mem, STACK.pop(-1))
+        value = mem
+
+    elif instruction == 'STDOUT':
+        STACK.pop(-1)
+        value = ''
+
+    elif instruction == 'STDIN':
+        STACK.append(value)
+        value = ''
+
+    elif instruction == 'ADD':
+        first = STACK.pop(-1)
+        second = STACK.pop(-1)
+        STACK.append(transform_value(first) + transform_value(second))
+        value = ''
+
+    elif instruction == 'SUB':
+        first = STACK.pop(-1)
+        second = STACK.pop(-1)
+        STACK.append(transform_value(second) - transform_value(first))
+
+
+    num = str(len(instructions) + 1).ljust(4, ' ')
+    instruction = str(instruction).ljust(8, ' ')
+    return('{} {} {}'.format(num, instruction, value))
 
 def instruction_assignment(statement):
     tokens = statement.split()
-    val = tokens[2]
-    id = tokens[0]
-    if lexer(val) == 'BOOLEAN':
-        val = 0 if val == 'false' else 1
-    ins_type = 'PUSHI'
-    instructions.append('{}    {}    {}'.format(len(instructions) + 1, ins_type, val))
-    for tup in memory_table:
-        if tup[0] == id:
-            val = tup[1]
-    instructions.append('{}    {}    {}'.format(len(instructions) + 1, 'POPM', val))
+    VAL = tokens[2]
+    ID = tokens[0]
+    inst_type = 'PUSHM' if lexer(VAL) == 'IDENTIFIER' else 'PUSHI'
+    instructions.append(create_instruction(instruction=inst_type, value=VAL))
+    instructions.append(create_instruction(instruction='POPM', value=ID))
 
-sample = ['int num , nu2m , large$ ;',
-        'num = 0 ;',
-        'nu2 = 15 ;',
-        'boolean hey ;',
-        'hey = true ;']
 
-table_add(sample[0])
-instruction_assignment(sample[1])
-instruction_assignment(sample[2])
-instruction_assignment(sample[3])
-instruction_assignment(sample[4])
+def print_instructions():
+    print(*instructions, sep='\n')
 
-print(*instructions, sep='\n')
-print('Symbol Table')
-print('Identifier   MemoryLocation  Type')
-for tup in memory_table:
-    print('{}        {}               {}'.format(tup[0], tup[1], tup[2]))
+def print_symbol_table():
+    print('Symbol Table')
+    print('Identifier   MemoryLocation  Type')
+    for symbol in symbol_table:
+        ID = str(symbol.ID).ljust(12, ' ')
+        MEM = str(symbol.MEM).ljust(15, ' ')
+        TYPE = symbol.TYPE
+        print('{} {} {}'.format(ID, MEM, TYPE))
+
+def create_statements(text):
+    statements = []
+    statement = []
+    idx = 0
+    open_paren = False
+    open_curly = False
+    while idx < len(text):
+
+
+
+sample = [
+    'int num , nu2m , large$ ;',
+    'num = 0 ;',
+    'nu2m = 15 ;',
+    'boolean hey ;',
+    'hey = true ;',
+    'hey = false ;'
+    ]
+
+while ADDR < len(sample):
+    statement = sample[ADDR]
+    if is_declaration(statement):
+        table_add(statement)
+    elif is_assignment(statement):
+        instruction_assignment(statement)
+    ADDR += 1
+
+print_instructions()
+print_symbol_table()
 # If
-
+all_stms = ''
+for statement in sample:
+    all_stms += statement
+print(process_file(all_stms, as_string=True))
+print(process_file('SampleInput3.txt'))
 # While
