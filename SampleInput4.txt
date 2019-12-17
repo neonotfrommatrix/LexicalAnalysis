@@ -1,0 +1,5 @@
+! Find largest value between two numbers!
+int num, nu2m, large$, sum;
+num = 0;
+nu2m = 15;
+sum = num + nu2m;
